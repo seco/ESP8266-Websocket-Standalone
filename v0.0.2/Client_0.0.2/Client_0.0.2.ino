@@ -6,7 +6,7 @@
 #define debug
 
 const char* apssid     = "ESP8266-Wifi-Server-Prototype";
-const char* appassword = "9331822416340669";
+const char* appassword = "xxxxxxxxxx";
 
 const char* serverip   = "192.168.0.1";
 const int port         = 81;
