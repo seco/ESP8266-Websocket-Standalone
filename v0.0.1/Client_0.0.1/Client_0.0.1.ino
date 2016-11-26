@@ -5,12 +5,6 @@
 // define debug as true to debug the module using the UART TX and RX pins
 #define debug
 
-// use this only of real internet connection is needed
-// use to enable control over internet (IoT)
-// TODO: test this function
-// const char* stassid = "FRITZ!Box 6360 Cable";
-// const char* stapassword = "9331822416340669";
-
 // internal AP (only my modules are in this network)
 // enables communication betweet all modules without
 // internet and additional hardware
@@ -18,7 +12,7 @@ IPAddress ip( 192, 168, 0, 1 );
 IPAddress gateway( 192, 168, 1, 1);
 IPAddress subnet( 255, 255, 255, 0 );
 const char* apssid = "ESP8266-Wifi-Server-Prototype";
-const char* appassword = "9331822416340669";
+const char* appassword = "xxxxxxxxxx";
 
 // start webserver
 // this is accessable for all modules and clients in real
