@@ -11,8 +11,8 @@
 // use this only of real internet connection is needed
 // use to enable control over internet (IoT)
 // TODO: test this function
-const char* stassid = "FRITZ!Box 6360 Cable";
-const char* stapassword = "9331822416340669";
+const char* stassid = "xxxxxxxxxx";
+const char* stapassword = "xxxxxxxxxx";
 
 // internal AP (only my modules are in this network)
 // enables communication betweet all modules without
@@ -21,7 +21,7 @@ IPAddress ip( 192, 168, 0, 1 );
 IPAddress gateway( 192, 168, 1, 1);
 IPAddress subnet( 255, 255, 255, 0 );
 const String apssid = "ESP8266-Wifi-Server-Prototype";
-const String appassword = "9331822416340669";
+const String appassword = "xxxxxxxxxx";
 
 // start websockets-server on port
 // TODO: check for free ports
