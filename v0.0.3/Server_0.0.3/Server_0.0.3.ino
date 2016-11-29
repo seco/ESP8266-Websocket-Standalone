@@ -3,6 +3,7 @@
 #include <WebSocketsServer.h>
 #include <Udp.h>
 #include <WiFiUDP.h>
+#include <ArduinoJson.h>
 
 // define debug as true to debug the module using the UART TX and RX pins
 #define debug
@@ -11,8 +12,8 @@
 // use this only of real internet connection is needed
 // use to enable control over internet (IoT)
 // TODO: test this function
-const char* stassid = "xxxxxxxxxx";
-const char* stapassword = "xxxxxxxxxx";
+const char* stassid = "FRITZ!Box 6360 Cable";
+const char* stapassword = "9331822416340669";
 
 // internal AP (only my modules are in this network)
 // enables communication betweet all modules without
@@ -21,7 +22,7 @@ IPAddress ip( 192, 168, 0, 1 );
 IPAddress gateway( 192, 168, 1, 1);
 IPAddress subnet( 255, 255, 255, 0 );
 const String apssid = "ESP8266-Wifi-Server-Prototype";
-const String appassword = "xxxxxxxxxx";
+const String appassword = "9331822416340669";
 
 // start websockets-server on port
 // TODO: check for free ports
@@ -32,6 +33,9 @@ WebSocketsServer server = WebSocketsServer( port );
 #ifdef internet
 WiFiUDP udp;
 #endif
+
+#define bufferSize 500
+DynamicJsonBuffer JSONBuffer;
 
 // Variable to hold the current time
 int lastRealTime = 0;
@@ -89,37 +93,22 @@ void requestTime( ){
 }
 #endif
 
-class Message{
-  private:
-    String type = "";
-    String text = "";
-    int t = 0;
-    int id = -1;
-  
-  public:
-    Message( String s ){
-    
-    }
-    Message( String t, String m ){
-      this->type = t;
-      this->text = m;
-      this->t = getTime();
-      this->id = -1;
-    }
-    Message( String t, String m, int id ){
-      this->type = t;
-      this->text = m;
-      this->t = getTime();
-      this->id = id;
-    }
-    String toString( ){
-      String s = "";
-      s += "{\"type\":\"" + type + "\",\"text\":\"" + text + "\",\"id\":" + id + ",\"t\":" + t + "}";
-      return s;
-    }
-};
+JsonObject& jsonToObject( char* s ){
+  return JSONBuffer.parseObject( s );
+}
+
+char * objectToJson( JsonObject& o ){
+  char s[bufferSize];
+  memset(s, 0x00, bufferSize);   // this is necessary to set the char* with an ending zero, otherwise there will be a stack overflow
+  o.printTo( s, sizeof(s) );
+  return s;
+}
 
 void doSomething(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
+    char message[lenght];
+    for( size_t i = 0; i < lenght; ++i ){
+        message[i] = (char)payload[i];
+    }
 
     switch(type) {
         case WStype_DISCONNECTED:
@@ -129,14 +118,38 @@ void doSomething(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
             break;
         case WStype_CONNECTED:
           {
-            Message *m = new Message( "text", "connected", num );
-            server.sendTXT(num, m->toString().c_str());
+            JsonObject& data = JSONBuffer.createObject();
+            data["type"] = "text";
+            data["id"] = num;
+            data["text"] = "connected";
+            data["timestamp"] = getTime();
+            server.sendTXT(num, objectToJson( data ));
           }
             break;
         case WStype_TEXT:
           {
+            JsonObject& data = jsonToObject( message );
             #ifdef debug
-            Serial.println( "gotSomeMessage" );
+            {
+              String type = data["type"];
+              Serial.print( "type: " );
+              Serial.println( type );
+            }
+            {
+              String text = data["text"];
+              Serial.print( "text: ");
+              Serial.println( text );
+            }
+            {
+              int id = data["id"];
+              Serial.print( "id: ");
+              Serial.println( id );
+            }
+            {
+              unsigned long int timestamp = data["timestamp"];
+              Serial.print( "timestamp: ");
+              Serial.println( timestamp );
+            }
             #endif
           }
             break;
