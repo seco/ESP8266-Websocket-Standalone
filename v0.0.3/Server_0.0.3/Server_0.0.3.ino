@@ -4,6 +4,7 @@
 #include <Udp.h>
 #include <WiFiUDP.h>
 #include <ArduinoJson.h>
+#include <Time.h>
 
 // define debug as true to debug the module using the UART TX and RX pins
 #define debug
@@ -12,8 +13,8 @@
 // use this only of real internet connection is needed
 // use to enable control over internet (IoT)
 // TODO: test this function
-const char* stassid = "xxxxxxxxxx";
-const char* stapassword = "xxxxxxxxxx";
+const char* stassid = "FRITZ!Box 6360 Cable";
+const char* stapassword = "9331822416340669";
 
 // internal AP (only my modules are in this network)
 // enables communication betweet all modules without
@@ -22,7 +23,7 @@ IPAddress ip( 192, 168, 0, 1 );
 IPAddress gateway( 192, 168, 1, 1);
 IPAddress subnet( 255, 255, 255, 0 );
 const String apssid = "ESP8266-Wifi-Server-Prototype";
-const String appassword = "xxxxxxxxxx";
+const String appassword = "9331822416340669";
 
 // start websockets-server on port
 // TODO: check for free ports
@@ -38,8 +39,21 @@ WiFiUDP udp;
 DynamicJsonBuffer JSONBuffer;
 
 // Variable to hold the current time
-int lastRealTime = 0;
-int lastTimeRefresh = millis();
+extern "C"{
+  #include "user_interface.h"
+}
+os_timer_t t;
+int local_time = 0;
+#ifdef internet
+bool requestTime = true;
+#endif
+void timerCallback( void *pArg ){
+  local_time++;
+  #ifdef internet
+  if( local_time % 3600 == 0 )
+    requestTime = true;
+  #endif
+}
 
 #ifdef internet
 int ntpUnixTime (UDP &udp){
@@ -83,15 +97,8 @@ int ntpUnixTime (UDP &udp){
 #endif
 
 int getTime( ){
-  return lastRealTime + floor( ( millis() - lastTimeRefresh ) / 1000 );
+  return local_time;
 }
-
-#ifdef internet
-void requestTime( ){
-  lastRealTime = ntpUnixTime( udp );
-  lastTimeRefresh = millis();
-}
-#endif
 
 JsonObject& jsonToObject( char* s ){
   return JSONBuffer.parseObject( s );
@@ -130,26 +137,18 @@ void doSomething(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) {
           {
             JsonObject& data = jsonToObject( message );
             #ifdef debug
-            {
-              String type = data["type"];
-              Serial.print( "type: " );
-              Serial.println( type );
-            }
-            {
-              String text = data["text"];
-              Serial.print( "text: ");
-              Serial.println( text );
-            }
-            {
-              int id = data["id"];
-              Serial.print( "id: ");
-              Serial.println( id );
-            }
-            {
-              unsigned long int timestamp = data["timestamp"];
-              Serial.print( "timestamp: ");
-              Serial.println( timestamp );
-            }
+            String type = data["type"];
+            Serial.print( "type: " );
+            Serial.println( type );
+            bool text = data["text"];
+            Serial.print( "text: ");
+            Serial.println( text );
+            int id = data["id"];
+            Serial.print( "id: ");
+            Serial.println( id );
+            unsigned long int timestamp = data["timestamp"];
+            Serial.print( "timestamp: ");
+            Serial.println( timestamp );
             #endif
           }
             break;
@@ -199,11 +198,8 @@ void setup(void){
     #endif
   }
   Serial.println();
-  #endif
-
-  #ifdef internet
-  // request time from timeserver
-  requestTime();
+  Serial.print( "Signalstrength: " );
+  Serial.println( WiFi.RSSI() );
   #endif
 
   // Start AP
@@ -217,6 +213,9 @@ void setup(void){
   Serial.println( appassword );
   Serial.println();
   #endif
+
+  os_timer_setfn(&t, timerCallback, NULL );
+  os_timer_arm(&t, 1000, true);
 
   // start websocket-server
   server.begin();
@@ -232,14 +231,10 @@ void setup(void){
 
 void loop(void){
   server.loop();
-  
   #ifdef internet
-  // refresh time every hour
-  if( getTime() % 3600 == 0 ){
-    requestTime();
-    #ifdef debug
-    Serial.println( "Requested Time" );
-    #endif
+  if( requestTime ){
+    local_time = ntpUnixTime( udp );
+    requestTime = false;
   }
   #endif
 }
