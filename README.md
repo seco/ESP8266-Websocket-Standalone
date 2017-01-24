@@ -12,6 +12,7 @@ ESP8266 example to easey connect two or more ESP8266 modules without external ro
 
 ## Minimal Example to start a Server
 The client is nearly the same...
+Use the Client_0.0.4 or WebClient_0.0.3
 
 ```C++
 #include <ESP8266star.h>
