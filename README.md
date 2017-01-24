@@ -1,5 +1,15 @@
 # ESP8266-Websocket-Standalone
 ESP8266 example to easey connect two or more ESP8266 modules without external router or other additional hardware
+
+## Dependencies
+- ESP8266Wifi.h
+- ESP8266WifiMulti.h
+- WebSocketsServer.h
+- Udp.h
+- WiFiUDP.h
+- ArduinoJson.h
+- Time.h
+
 ```C++
 #include <ESP8266star.h>
 
