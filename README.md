@@ -10,6 +10,9 @@ ESP8266 example to easey connect two or more ESP8266 modules without external ro
 - ArduinoJson.h
 - Time.h
 
+## Minimal Example to start a Server
+The client is nearly the same...
+
 ```C++
 #include <ESP8266star.h>
 
